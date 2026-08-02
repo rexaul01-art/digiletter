@@ -120,6 +120,8 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
   const [solvedWords, setSolvedWords] = useState<string[]>([]);
   const [selectedStart, setSelectedStart] = useState<{ r: number; c: number } | null>(null);
   const [selectedEnd, setSelectedEnd] = useState<{ r: number; c: number } | null>(null);
+  const [solvedHighlights, setSolvedHighlights] = useState<{ r: number; c: number; color: string }[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Game 2: Trivia Quiz States
   const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
@@ -391,11 +393,11 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
         setAlreadyOpened(true);
         setOpenedAtTime(new Date(data.openedAt));
       } else {
-        setWrongAnswerMsg("Could not verify. Please check network.");
+        setWrongAnswerMsg(`Verification failed: ${data.error || "Could not verify"}`);
       }
     } catch (err) {
       console.error(err);
-      setWrongAnswerMsg("Network error.");
+      setWrongAnswerMsg(`Network error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setOpeningAction(false);
     }
@@ -403,6 +405,12 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
 
   // Lock and fetch if no riddle is configured
   const handleOpenStandardNote = async () => {
+    // If we already loaded the full envelope data (unlocked via riddle), just enter the experience
+    if (giftData && 'message1' in giftData) {
+      setStarted(true);
+      return;
+    }
+
     setOpeningAction(true);
     try {
       const res = await fetch("/api/gifts/open", {
@@ -419,12 +427,18 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
       } else if (data.alreadyOpened) {
         setAlreadyOpened(true);
         setOpenedAtTime(new Date(data.openedAt));
+      } else if (data.wrongAnswer) {
+        // The gift has a riddle but we didn't send an answer.
+        // This means the riddle was already solved earlier and giftData should have full content.
+        if (giftData && 'message1' in giftData) {
+          setStarted(true);
+        }
       } else {
-        alert("Error loading envelope.");
+        alert(`Error loading envelope: ${data.error || "Unknown error"}`);
       }
     } catch (err) {
       console.error(err);
-      alert("Network error.");
+      alert(`Network error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setOpeningAction(false);
     }
@@ -451,66 +465,132 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
   };
 
   // Word Search Cell clicking handler
-  const handleCellClick = (r: number, c: number) => {
-    if (!selectedStart) {
-      setSelectedStart({ r, c });
-    } else {
-      // Check if straight line
-      const dr = Math.sign(r - selectedStart.r);
-      const dc = Math.sign(c - selectedStart.c);
-      const isLine = 
-        selectedStart.r === r || 
-        selectedStart.c === c || 
-        Math.abs(selectedStart.r - r) === Math.abs(selectedStart.c - c);
+  const HIGHLIGHTER_COLORS = [
+    "rgba(253, 224, 71, 0.45)",   // Pastel Yellow
+    "rgba(134, 239, 172, 0.45)",   // Pastel Green
+    "rgba(147, 197, 253, 0.45)",   // Pastel Blue
+    "rgba(244, 143, 177, 0.45)",   // Pastel Pink
+    "rgba(216, 180, 254, 0.45)",   // Pastel Purple
+    "rgba(253, 186, 116, 0.45)",   // Pastel Orange
+  ];
 
-      if (isLine) {
-        const len = Math.max(Math.abs(r - selectedStart.r), Math.abs(c - selectedStart.c)) + 1;
-        let wordStr = "";
-        for (let i = 0; i < len; i++) {
-          wordStr += searchGrid[selectedStart.r + dr * i][selectedStart.c + dc * i];
-        }
-        
-        const revStr = wordStr.split("").reverse().join("");
-        
-        // Find matching word
-        const matched = giftData.wordPuzzle.find((w: any) => {
-          const cleanAns = w.answer.replace(/[^a-zA-Z]/g, "").toUpperCase();
-          return cleanAns === wordStr || cleanAns === revStr;
-        });
+  // Starts selection (mouse)
+  const handleStartDrag = (r: number, c: number) => {
+    setSelectedStart({ r, c });
+    setSelectedEnd({ r, c });
+    setIsDragging(true);
+  };
 
-        if (matched) {
-          const cleanMatched = matched.answer.replace(/[^a-zA-Z]/g, "").toUpperCase();
-          if (!solvedWords.includes(cleanMatched)) {
-            setSolvedWords((prev) => [...prev, cleanMatched]);
-            playFlipTone();
-          }
-          setSelectedStart(null);
-          setSelectedEnd(null);
-        } else {
-          // Flash selection end and clear
-          setSelectedEnd({ r, c });
-          setTimeout(() => {
-            setSelectedStart(null);
-            setSelectedEnd(null);
-          }, 450);
-        }
-      } else {
-        // Shift start cell to newly clicked cell
-        setSelectedStart({ r, c });
-        setSelectedEnd(null);
-      }
+  // Updates selection end (mouse)
+  const handleDragEnter = (r: number, c: number) => {
+    if (!isDragging) return;
+    setSelectedEnd({ r, c });
+  };
+
+  // Finalizes selection (mouse)
+  const handleEndDrag = () => {
+    if (!isDragging || !selectedStart || !selectedEnd) return;
+    setIsDragging(false);
+    validateSelection(selectedStart.r, selectedStart.c, selectedEnd.r, selectedEnd.c);
+  };
+
+  // Starts selection (touch mobile)
+  const handleTouchStart = (e: React.TouchEvent, r: number, c: number) => {
+    e.preventDefault(); // prevents standard touch gestures (page scrolling) inside the grid
+    setSelectedStart({ r, c });
+    setSelectedEnd({ r, c });
+    setIsDragging(true);
+  };
+
+  // Updates selection end (touch mobile)
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging || !selectedStart) return;
+    const touch = e.touches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!element) return;
+
+    const rAttr = element.getAttribute("data-row");
+    const cAttr = element.getAttribute("data-col");
+    if (rAttr !== null && cAttr !== null) {
+      const r = parseInt(rAttr);
+      const c = parseInt(cAttr);
+      setSelectedEnd({ r, c });
     }
   };
 
-  // Helper check if cell is in selection
+  // Finalizes selection (touch mobile)
+  const handleTouchEnd = () => {
+    if (!isDragging || !selectedStart || !selectedEnd) return;
+    setIsDragging(false);
+    validateSelection(selectedStart.r, selectedStart.c, selectedEnd.r, selectedEnd.c);
+  };
+
+  // Validates if the selected line matches any riddle word clue
+  const validateSelection = (sr: number, sc: number, er: number, ec: number) => {
+    const dr = Math.sign(er - sr);
+    const dc = Math.sign(ec - sc);
+    const isLine = 
+      sr === er || 
+      sc === ec || 
+      Math.abs(sr - er) === Math.abs(sc - ec);
+
+    if (isLine) {
+      const len = Math.max(Math.abs(er - sr), Math.abs(ec - sc)) + 1;
+      let wordStr = "";
+      for (let i = 0; i < len; i++) {
+        wordStr += searchGrid[sr + dr * i][sc + dc * i];
+      }
+      
+      const revStr = wordStr.split("").reverse().join("");
+      
+      // Find matching word
+      const matched = giftData.wordPuzzle.find((w: any) => {
+        const cleanAns = w.answer.replace(/[^a-zA-Z]/g, "").toUpperCase();
+        return cleanAns === wordStr || cleanAns === revStr;
+      });
+
+      if (matched) {
+        const cleanMatched = matched.answer.replace(/[^a-zA-Z]/g, "").toUpperCase();
+        if (!solvedWords.includes(cleanMatched)) {
+          setSolvedWords((prev) => [...prev, cleanMatched]);
+          
+          // Allocate persistent highlighter color for this word
+          const color = HIGHLIGHTER_COLORS[solvedWords.length % HIGHLIGHTER_COLORS.length];
+          const newHighlights: { r: number; c: number; color: string }[] = [];
+          for (let i = 0; i < len; i++) {
+            newHighlights.push({
+              r: sr + dr * i,
+              c: sc + dc * i,
+              color
+            });
+          }
+          setSolvedHighlights((prev) => [...prev, ...newHighlights]);
+          playFlipTone();
+        }
+      }
+    }
+    
+    // Clear temporary selection indices
+    setSelectedStart(null);
+    setSelectedEnd(null);
+  };
+
+  // Helper check if cell is inside the active drag path
   const isCellSelected = (r: number, c: number) => {
     if (!selectedStart) return false;
     if (selectedStart.r === r && selectedStart.c === c) return true;
     if (!selectedEnd) return false;
 
-    // Check if cell lies in the path
+    // Must form a straight vertical, horizontal, or diagonal line
     const dr = Math.sign(selectedEnd.r - selectedStart.r);
     const dc = Math.sign(selectedEnd.c - selectedStart.c);
+    const isLine = 
+      selectedStart.r === selectedEnd.r || 
+      selectedStart.c === selectedEnd.c || 
+      Math.abs(selectedStart.r - selectedEnd.r) === Math.abs(selectedStart.c - selectedEnd.c);
+
+    if (!isLine) return false;
+
     const len = Math.max(Math.abs(selectedEnd.r - selectedStart.r), Math.abs(selectedEnd.c - selectedStart.c)) + 1;
     
     for (let i = 0; i < len; i++) {
@@ -968,27 +1048,40 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
+            onMouseUp={handleEndDrag}
+            onTouchEnd={handleTouchEnd}
             className="w-full bg-[#FCF8F2] border-thick rounded-[28px] p-5 shadow-offset relative space-y-5 flex flex-col justify-between"
           >
             <div className="text-center space-y-1">
               <span className="font-handwritten text-accent-red text-3xl rotate-[-2deg] inline-block">Word Search Puzzle</span>
               <h3 className="font-display font-bold text-lg text-black">Find the hidden words ♡</h3>
-              <p className="text-[10px] text-neutral-500">Click the first letter and last letter of the word in the grid to verify.</p>
+              <p className="text-[10px] text-neutral-500">Hold and drag across the letters in the grid to highlight.</p>
             </div>
 
             {/* The Letter Grid */}
-            <div className="grid grid-cols-9 gap-1.5 max-w-[340px] mx-auto p-3 border-thick bg-white rounded-2xl shadow-offset-sm select-none">
+            <div 
+              onTouchMove={handleTouchMove}
+              className="grid grid-cols-9 gap-1.5 max-w-[340px] mx-auto p-3 border-thick bg-white rounded-2xl shadow-offset-sm select-none"
+            >
               {searchGrid.map((row, r) => 
                 row.map((letter, c) => {
                   const isSelected = isCellSelected(r, c);
+                  const highlightColor = solvedHighlights.find((h) => h.r === r && h.c === c)?.color;
                   return (
                     <button
                       key={`${r}-${c}`}
-                      onClick={() => handleCellClick(r, c)}
+                      data-row={r}
+                      data-col={c}
+                      onMouseDown={() => handleStartDrag(r, c)}
+                      onMouseEnter={() => handleDragEnter(r, c)}
+                      onTouchStart={(e) => handleTouchStart(e, r, c)}
+                      style={highlightColor ? { backgroundColor: highlightColor } : undefined}
                       className={`w-8 h-8 rounded-lg font-display font-bold text-sm border-2 border-transparent transition-all flex items-center justify-center ${
                         isSelected 
                           ? "bg-pastel-pink border-[#171717] scale-105 shadow-sm"
-                          : "bg-neutral-50 text-[#171717] hover:bg-[#FCF8F2]"
+                          : highlightColor
+                            ? "border-transparent" // color applied by style
+                            : "bg-neutral-50 text-[#171717] hover:bg-[#FCF8F2]"
                       }`}
                     >
                       {letter}

@@ -203,7 +203,15 @@ export const giftService = {
         });
         return updated as unknown as Gift;
       } catch (err) {
-        console.error("Prisma opened update failed, falling back to JSON storage:", err);
+        console.error("Prisma opened update failed, falling back to read-only DB query:", err);
+        try {
+          const found = await db.gift.findUnique({
+            where: { token },
+          });
+          if (found) return found as unknown as Gift;
+        } catch (readErr) {
+          console.error("Resilient read-only fallback query failed too:", readErr);
+        }
       }
     }
 
