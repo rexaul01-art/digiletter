@@ -1,0 +1,39 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Gift {
+  id             String    @id @default(uuid())
+  token          String    @unique
+  senderName     String
+  receiverName   String
+  language       String    // "english" | "hinglish"
+  relationship   String    // e.g. "girlfriend", "boyfriend", etc.
+  message1       String
+  message2       String
+  message3       String
+  photos         String    @default("[]") // JSON stringified array of photo URLs
+  unlockQuestion String    @default("")
+  unlockAnswer   String    @default("")
+  gameType       String    @default("heart_slider") // "heart_slider" | "riddle" | "both"
+  wordPuzzle     String    @default("[]") // JSON stringified array of { question: string, answer: string }
+  triviaQuiz     String    @default("[]") // JSON stringified array of { question: string, correct: string, wrong: string }
+  
+  // Payment
+  paid           Boolean   @default(false)
+  paymentId      String?   // Razorpay payment ID
+  orderId        String?   // Razorpay order ID
+  
+  // One-time view logic
+  opened         Boolean   @default(false)
+  openedAt       DateTime?
+  
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([token])
+}

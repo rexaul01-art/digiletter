@@ -1,0 +1,1 @@
+              <p className="text-[10px] text-neutral-500">Press, hold and drag/swipe across letters in the grid to solve.</p>
