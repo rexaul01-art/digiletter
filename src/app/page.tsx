@@ -385,7 +385,7 @@ export default function LandingPage() {
               <span className="font-handwritten text-accent-red text-xl">© 2026</span>
             </div>
             <div>
-              Handcrafted in India with ❤️ for loved ones everywhere.
+              Handcrafted in India by @rexaul__09 with ❤️
             </div>
             <div className="flex gap-4">
               <span className="hover:underline cursor-pointer">Terms</span>

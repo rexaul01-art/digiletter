@@ -21,6 +21,11 @@ export function DottedBackground({ children, className = "" }: DottedBackgroundP
       <div className="relative z-10 flex-1 flex flex-col">
         {children}
       </div>
+
+      {/* Brand Watermark */}
+      <div className="absolute bottom-4 left-6 text-xs text-[#171717]/40 font-semibold z-30 pointer-events-none select-none">
+        made by- @rexaul__09
+      </div>
     </div>
   );
 }

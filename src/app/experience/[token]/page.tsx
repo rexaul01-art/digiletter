@@ -1324,6 +1324,9 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
                         <p className="text-sm text-neutral-600 font-semibold tracking-wide">
                           Forever yours. ♡
                         </p>
+                        <p className="text-[10px] text-neutral-400 font-semibold pt-1">
+                          made by- @rexaul__09
+                        </p>
                       </div>
 
                       <div className="pt-2">
