@@ -4,8 +4,8 @@ import React, { useRef, useEffect, useState } from "react";
 
 interface ScratchCardProps {
   children: React.ReactNode;
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
   onComplete?: () => void;
   overlayColor?: string;
   brushRadius?: number;
@@ -13,21 +13,52 @@ interface ScratchCardProps {
 
 export function ScratchCard({
   children,
-  width,
-  height,
+  width: propWidth,
+  height: propHeight,
   onComplete,
   overlayColor = "#E5DAFF",
   brushRadius = 24,
 }: ScratchCardProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [dimensions, setDimensions] = useState({ width: propWidth || 0, height: propHeight || 0 });
   const [isCompleted, setIsCompleted] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
+
+  // Measure parent container dynamically if width/height are not hardcoded
+  useEffect(() => {
+    if (propWidth && propHeight) {
+      setDimensions({ width: propWidth, height: propHeight });
+      return;
+    }
+
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    setDimensions({
+      width: rect.width || 320,
+      height: rect.height || 400,
+    });
+
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width && height) {
+          setDimensions({ width, height });
+        }
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [propWidth, propHeight]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+
+    const { width, height } = dimensions;
+    if (width === 0 || height === 0) return;
 
     // High-DPI screens scaling support
     const dpr = window.devicePixelRatio || 1;
@@ -61,7 +92,7 @@ export function ScratchCard({
     // Draw envelope seal doodle icon
     ctx.font = "24px serif";
     ctx.fillText("✉", width / 2, height / 2 - 28);
-  }, [width, height, overlayColor]);
+  }, [dimensions, overlayColor]);
 
   const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
@@ -102,6 +133,7 @@ export function ScratchCard({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const { width, height } = dimensions;
     const dpr = window.devicePixelRatio || 1;
     const w = Math.floor(width * dpr);
     const h = Math.floor(height * dpr);
@@ -152,14 +184,14 @@ export function ScratchCard({
   };
 
   return (
-    <div className="relative overflow-hidden select-none w-full h-full rounded-2xl">
+    <div ref={containerRef} className="relative overflow-hidden select-none w-full h-full rounded-2xl">
       {/* Behind container content */}
       <div className="w-full h-full relative z-10">
         {children}
       </div>
 
       {/* Floating Canvas */}
-      {!isCompleted && (
+      {!isCompleted && dimensions.width > 0 && dimensions.height > 0 && (
         <canvas
           ref={canvasRef}
           onMouseDown={handleStart}
