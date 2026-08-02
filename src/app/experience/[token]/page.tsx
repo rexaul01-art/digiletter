@@ -155,6 +155,9 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
   const [isMuted, setIsMuted] = useState(false);
   const [audioCtx, setAudioCtx] = useState<AudioContext | null>(null);
 
+  // Not Found State
+  const [notFound, setNotFound] = useState(false);
+
   // Load basic preview meta data first
   useEffect(() => {
     fetch(`/api/gifts/info?token=${token}`)
@@ -172,10 +175,15 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
             const { grid } = generateWordSearch(answers);
             setSearchGrid(grid);
           }
+        } else {
+          setNotFound(true);
         }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setNotFound(true);
+        setLoading(false);
+      });
   }, [token]);
 
   // Shuffle quiz options on quiz index changes
@@ -581,6 +589,36 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
           <Loader2 className="w-8 h-8 animate-spin text-[#171717]" />
           <p className="font-display font-bold text-lg text-[#171717]">Preparing letter envelope...</p>
         </div>
+      </DottedBackground>
+    );
+  }
+
+  // VIEW: Not Found Screen
+  if (notFound) {
+    return (
+      <DottedBackground className="justify-center items-center p-6">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-[#FCF8F2] border-thick rounded-[28px] p-8 max-w-md w-full shadow-offset text-center space-y-6"
+        >
+          <div className="w-16 h-16 bg-pastel-pink border-thick rounded-2xl flex items-center justify-center mx-auto shadow-offset-sm rotate-[-4deg]">
+            <XCircle className="w-8 h-8 text-accent-red" strokeWidth={2} />
+          </div>
+          
+          <div className="space-y-2">
+            <h2 className="font-display font-bold text-2xl sm:text-3xl">HeartNote Not Found</h2>
+            <p className="text-sm text-[#4A4A4A] leading-relaxed">
+              We couldn't find the digital letter you're looking for. Please check the URL link or ask the sender to create it again.
+            </p>
+          </div>
+
+          <div className="pt-2">
+            <Link href="/" className="px-6 py-3 bg-[#171717] hover:bg-neutral-800 text-white font-semibold text-sm rounded-xl transition-all shadow-offset-sm inline-block">
+              Create a new note
+            </Link>
+          </div>
+        </motion.div>
       </DottedBackground>
     );
   }
