@@ -1009,10 +1009,6 @@ export default function CreatorWizard() {
                     >
                       <Heart className="w-6 h-6 fill-[#FCF8F2] text-[#FCF8F2]" />
                     </motion.div>
-                    
-                    {/* Fold lines */}
-                    <div className="absolute inset-0 border-t border-[#171717] rotate-[15deg] origin-top-left" />
-                    <div className="absolute inset-0 border-t border-[#171717] -rotate-[15deg] origin-top-right" />
                   </motion.div>
 
                   <div className="text-center">

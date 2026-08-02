@@ -845,8 +845,6 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
             <div className="w-10 h-10 bg-accent-red border-2 border-[#171717] rounded-full flex items-center justify-center">
               <Heart className="w-5 h-5 fill-white text-white" />
             </div>
-            <div className="absolute inset-0 border-t border-[#171717] rotate-[15deg] origin-top-left" />
-            <div className="absolute inset-0 border-t border-[#171717] -rotate-[15deg] origin-top-right" />
           </div>
 
           <div className="p-4 border-thick bg-pastel-pink rounded-xl text-left flex gap-2">
@@ -932,6 +930,9 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
       
       {/* Dynamic hardware accelerated animations injected directly on hydrate */}
       <style>{`
+        body, html {
+          overscroll-behavior-y: none;
+        }
         @keyframes rain {
           0% { transform: translateY(-50px) rotate(0deg); opacity: 0; }
           10% { opacity: 1; }
@@ -971,6 +972,37 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
         .rotate-y-180 {
           transform: rotateY(180deg);
         }
+        
+        /* Custom range slider thumb styling */
+        input[type="range"] {
+          -webkit-appearance: none;
+          appearance: none;
+          background: #white;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          background: #FFC928 !important;
+          border: 3px solid #171717 !important;
+          cursor: pointer;
+          box-shadow: 2px 2px 0px #171717;
+          transition: transform 0.1s;
+        }
+        input[type="range"]::-webkit-slider-thumb:active {
+          transform: scale(1.15);
+        }
+        input[type="range"]::-moz-range-thumb {
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          background: #FFC928 !important;
+          border: 3px solid #171717 !important;
+          cursor: pointer;
+          box-shadow: 2px 2px 0px #171717;
+        }
       `}</style>
 
       {/* Render custom overlay animations */}
@@ -998,24 +1030,30 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
             </div>
 
             {/* Split wax seal in center */}
-            <div className="relative w-full h-24 flex items-center justify-center">
+            <div className="relative w-full h-28 flex items-center justify-center">
               {/* Left Half Heart */}
               <motion.div 
                 style={{ 
-                  x: -30 + (sliderValue * 0.3)
+                  x: -25 + (sliderValue * 0.25)
                 }}
-                className="w-12 h-16 bg-accent-red border-thick border-r-0 rounded-l-full flex items-center justify-end pr-0.5 shadow-md z-20"
+                className="w-12 h-24 overflow-hidden relative z-20 flex items-center justify-end"
               >
-                <div className="w-2.5 h-2.5 bg-white rounded-full opacity-60 mr-2 mb-4" />
+                <svg className="w-24 h-24 fill-accent-red stroke-[#171717] stroke-[3px] absolute right-0" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
               </motion.div>
               
               {/* Right Half Heart */}
               <motion.div 
                 style={{ 
-                  x: 30 - (sliderValue * 0.3)
+                  x: 25 - (sliderValue * 0.25)
                 }}
-                className="w-12 h-16 bg-accent-red border-thick border-l-0 rounded-r-full flex items-center justify-start pl-0.5 shadow-md z-20"
-              />
+                className="w-12 h-24 overflow-hidden relative z-20 flex items-center justify-start"
+              >
+                <svg className="w-24 h-24 fill-accent-red stroke-[#171717] stroke-[3px] absolute left-0" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                </svg>
+              </motion.div>
             </div>
 
             {/* Brass Slider Drag container */}
@@ -1036,10 +1074,6 @@ export default function ExperiencePage({ params }: ExperiencePageProps) {
                 <span>Complete Seal (100)</span>
               </div>
             </div>
-
-            {/* Fold lines decoration */}
-            <div className="absolute inset-0 border-t-2 border-[#171717] rotate-[15deg] origin-top-left pointer-events-none" />
-            <div className="absolute inset-0 border-t-2 border-[#171717] -rotate-[15deg] origin-top-right pointer-events-none" />
           </motion.div>
         )}
 

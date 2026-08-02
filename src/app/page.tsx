@@ -132,10 +132,6 @@ export default function LandingPage() {
                 <div className="absolute w-10 h-10 bg-accent-red border-2 border-[#171717] rounded-full flex items-center justify-center shadow-sm z-10 transition-transform duration-300 hover:scale-110">
                   <Heart className="w-5 h-5 fill-[#FCF8F2] text-[#FCF8F2]" />
                 </div>
-                
-                {/* Envelope Flap lines */}
-                <div className="absolute inset-0 border-t border-[#171717] rotate-[18deg] origin-top-left" />
-                <div className="absolute inset-0 border-t border-[#171717] -rotate-[18deg] origin-top-right" />
               </motion.div>
 
               {/* Floating photo frame */}
