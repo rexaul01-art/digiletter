@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, League_Spartan, Caveat } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
+import Script from "next/script";
 import "./globals.css";
 
 const inter = Inter({
@@ -45,6 +46,12 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col dotted-bg text-[#171717]">
         {children}
         <Analytics />
+        <Script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1070624128374789"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

@@ -77,7 +77,7 @@ export default function LandingPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg md:text-xl text-[#4A4A4A] max-w-xl font-normal leading-relaxed"
           >
-            Create a premium, interactive digital letter for your loved ones. Combine warm custom messages, Polaroid photos, and a magical view-once opening experience. All for just <strong className="text-[#171717]">₹29</strong>.
+            Create a premium, interactive digital letter for your loved ones. Combine warm custom messages, Polaroid photos, and a magical view-once opening experience. All completely <strong className="text-[#171717]">Free</strong>.
           </motion.p>
 
           <motion.div 
@@ -204,7 +204,7 @@ export default function LandingPage() {
                 </div>
                 <h3 className="font-display font-bold text-xl">Secure & Generate</h3>
                 <p className="text-sm text-[#4A4A4A] leading-relaxed">
-                  Interact with a watermarked live phone preview. If you love it, make a single secure checkout payment of ₹29 to lock the letter and get a cryptographic view-once link.
+                  Interact with a watermarked live phone preview. If you love it, lock the letter to generate your secure view-once link instantly.
                 </p>
               </div>
 
@@ -279,7 +279,7 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               <div className="bg-[#FCF8F2] border-thick p-6 rounded-2xl shadow-offset-sm rotate-[-1deg]">
                 <p className="text-base italic text-[#4A4A4A] mb-6">
-                  &ldquo;I sent this to my boyfriend for our anniversary. The look on his face when he clicked to break the wax seal and the confetti popped was priceless. Best 29 rupees I ever spent.&rdquo;
+                  &ldquo;I sent this to my boyfriend for our anniversary. The look on his face when he clicked to break the wax seal and the confetti popped was priceless. The best digital gift I've ever sent.&rdquo;
                 </p>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-pastel-pink border-thick rounded-full flex items-center justify-center font-bold text-xs">
